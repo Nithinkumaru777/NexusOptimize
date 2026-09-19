@@ -1,0 +1,54 @@
+{
+  "name": "nexusapp",
+  "version": "2.0.0",
+  "description": "Nexus Optimize & Mod (NOM) — live game performance optimizer and mod manager",
+  "main": "ui/electron/main.js",
+  "scripts": {
+    "test": ".venv\\Scripts\\python -m pytest -q tests && node --test tests/*.test.js",
+    "start": "electron .",
+    "build:backend": ".venv\\Scripts\\python -m PyInstaller --noconfirm --clean --onedir --name nexus-core --paths . --collect-submodules uvicorn --distpath dist/backend --workpath dist/pyi-work --specpath dist core/main.py",
+    "build:app": "electron-builder --win",
+    "dist": "npm run build:backend && npm run build:app"
+  },
+  "keywords": [],
+  "author": "NexusApp",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^44.4.1",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.nexusapp.nom",
+    "productName": "Nexus Optimize & Mod",
+    "directories": {
+      "output": "dist/app"
+    },
+    "files": [
+      "ui/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "dist/backend/nexus-core",
+        "to": "backend"
+      },
+      {
+        "from": "third_party",
+        "to": "third_party",
+        "filter": [
+          "PresentMon*.exe"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

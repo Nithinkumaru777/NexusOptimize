@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' http://127.0.0.1:5000; img-src 'self' data: https://*.nexusmods.com;" />
+<title>Nexus Optimize &amp; Mod</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- Icon sprite -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-dash" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol>
+    <symbol id="i-chip" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16" cy="10" r="1.2"/><path d="M12 21a3 3 0 0 1 0-6h2a3 3 0 0 0 3-3"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></symbol>
+    <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4 18a9 9 0 1 1 16 0"/><path d="m12 14 4-5"/><circle cx="12" cy="14" r="1.5"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h11l5 5v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M7 3v6h9V3M7 21v-7h10v7"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  </svg>
+
+  <!-- Custom titlebar (frameless window) -->
+  <header class="titlebar">
+    <div class="titlebar-drag">
+      <span class="brand-mark">N</span>
+      <span class="brand-name">NEXUS<strong>OPTIMIZE</strong></span>
+      <span class="backend-pill" id="backend-pill"><i class="dot"></i> connecting…</span>
+    </div>
+    <div class="titlebar-actions">
+      <button class="overlay-btn" id="btn-overlay" title="Show a small always-on-top telemetry readout over your game (borderless/windowed only)">
+        <svg class="i"><use href="#i-eye"/></svg> Overlay <kbd>Ctrl+Shift+O</kbd>
+      </button>
+      <div class="titlebar-controls">
+        <button id="btn-min" class="tb-btn" title="Minimize">&#x2212;</button>
+        <button id="btn-max" class="tb-btn" title="Maximize">&#x25A1;</button>
+        <button id="btn-close" class="tb-btn tb-close" title="Close">&#x2715;</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="shell">
+
+    <nav class="sidebar">
+      <div class="nav-group">
+        <div class="nav-caption">Monitor</div>
+        <button class="nav-item active" data-view="dashboard"><svg class="i"><use href="#i-dash"/></svg> Dashboard</button>
+        <button class="nav-item" data-view="system"><svg class="i"><use href="#i-chip"/></svg> System Resources</button>
+        <button class="nav-item" data-view="bench"><svg class="i"><use href="#i-gauge"/></svg> Benchmark Lab</button>
+        <div class="nav-caption">Tune</div>
+        <button class="nav-item" data-view="optimizer"><svg class="i"><use href="#i-bolt"/></svg> Optimizer</button>
+        <button class="nav-item" data-view="mods"><svg class="i"><use href="#i-layers"/></svg> Mods</button>
+        <button class="nav-item" data-view="saves"><svg class="i"><use href="#i-save"/></svg> Save-Game Backups</button>
+        <button class="nav-item" data-view="backups"><svg class="i"><use href="#i-history"/></svg> Backup &amp; Rollback</button>
+        <div class="nav-caption">App</div>
+        <button class="nav-item" data-view="settings"><svg class="i"><use href="#i-gear"/></svg> Settings</button>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="game-chip">
+          <div class="game-chip-head">
+            <label class="game-chip-label" for="game-select">Target Game</label>
+            <button class="game-rescan" id="btn-rescan" title="Re-scan Steam / Epic libraries">&#x21bb; Rescan</button>
+          </div>
+          <select class="game-select" id="game-select" disabled><option>Detecting…</option></select>
+          <span class="game-chip-profile" id="game-profile">Auto-Discovery…</span>
+        </div>
+      </div>
+    </nav>
+
+    <main class="content">
+
+      <!-- ============ DASHBOARD ============ -->
+      <section class="view active" id="view-dashboard">
+        <div class="hero">
+          <div>
+            <div class="hero-kicker">Now targeting</div>
+            <h2 id="dash-game-name">—</h2>
+            <div class="hero-badges">
+              <span class="badge accent" id="hero-engine">—</span>
+              <span class="badge" id="hero-running">Not running</span>
+              <span class="badge" id="hero-vram-state">VRAM —</span>
+            </div>
+          </div>
+          <div class="hero-actions">
+            <button class="btn-primary" id="btn-launch-opt">Launch Server Optimized</button>
+            <p class="muted small" id="launch-opt-desc">Launches the selected game with optimized CPU scheduling.</p>
+            <div class="inline-message" id="launch-opt-msg"></div>
+          </div>
+        </div>
+
+        <div class="gauge-grid">
+          <div class="gauge-card" data-metric="vram">
+            <div class="gauge" id="gauge-vram"><div class="gauge-value"><span id="val-vram">0</span><small>%</small></div></div>
+            <div class="gauge-label">VRAM<small id="val-vram-mb">—</small></div>
+          </div>
+          <div class="gauge-card" data-metric="fps">
+            <div class="gauge" id="gauge-fps"><div class="gauge-value"><span id="val-fps">—</span><small>fps</small></div></div>
+            <div class="gauge-label">Frame Rate<small>no capture source yet</small></div>
+          </div>
+          <div class="gauge-card" data-metric="gpu-util">
+            <div class="gauge" id="gauge-gpu-util"><div class="gauge-value"><span id="val-gpu-util">0</span><small>%</small></div></div>
+            <div class="gauge-label">GPU Load<small id="val-gpu-temp-sub">—</small></div>
+          </div>
+          <div class="gauge-card" data-metric="latency">
+            <div class="gauge" id="gauge-latency"><div class="gauge-value"><span id="val-latency">0</span><small>ms</small></div></div>
+            <div class="gauge-label">Network Latency<small>TCP handshake</small></div>
+          </div>
+        </div>
+
+        <div class="panel-row wide-left">
+          <div class="panel">
+            <h3>Last 2 minutes
+              <span class="legend"><span><i style="background:var(--accent)"></i>VRAM %</span><span><i style="background:var(--accent-2)"></i>GPU %</span></span>
+            </h3>
+            <svg class="spark" id="spark" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <defs><linearGradient id="g-vram" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4de8d4" stop-opacity=".28"/><stop offset="1" stop-color="#4de8d4" stop-opacity="0"/></linearGradient></defs>
+              <path class="vram" id="spark-vram" d=""/>
+              <path class="gpu" id="spark-gpu" d=""/>
+            </svg>
+          </div>
+          <div class="panel">
+            <h3>System</h3>
+            <div class="stat-line"><span>GPU</span><strong id="stat-gpu-name">—</strong></div>
+            <div class="stat-line"><span>GPU Temp</span><strong id="stat-gpu-temp">—</strong></div>
+            <div class="stat-line"><span>CPU Load</span><strong id="stat-cpu">—</strong></div>
+            <div class="stat-line"><span>Status</span><strong id="stat-status" class="status-ok">Monitoring…</strong></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Activity</h3>
+          <div class="log" id="activity-log"></div>
+        </div>
+      </section>
+
+      <!-- ============ SYSTEM RESOURCES ============ -->
+      <section class="view" id="view-system">
+        <div class="view-header">
+          <div>
+            <h1>System Resources</h1>
+            <p class="subtitle">Live readings from NVML and psutil, refreshed every 2 s while this tab is open.</p>
+          </div>
+        </div>
+
+        <div class="panel-row three">
+          <div class="panel">
+            <h3>Memory <span class="badge num" id="sys-ram-pct">—</span></h3>
+            <div class="bar" id="sys-ram-bar"><i></i></div>
+            <p class="muted small num" id="sys-ram-text" style="margin:10px 0 0">—</p>
+          </div>
+          <div class="panel">
+            <h3>Video memory <span class="badge num" id="sys-vram-pct">—</span></h3>
+            <div class="bar" id="sys-vram-bar"><i></i></div>
+            <p class="muted small num" id="sys-vram-text" style="margin:10px 0 0">—</p>
+          </div>
+          <div class="panel">
+            <h3>GPU <span class="badge num" id="sys-gpu-util">—</span></h3>
+            <div class="bar" id="sys-gpu-bar"><i></i></div>
+            <p class="muted small num" id="sys-gpu-text" style="margin:10px 0 0">—</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>CPU cores <span class="legend" id="sys-core-legend"></span></h3>
+          <div class="core-grid" id="sys-cores"></div>
+        </div>
+
+        <div class="panel">
+          <h3>Top processes by memory</h3>
+          <table class="table">
+            <thead><tr><th>Process</th><th>PID</th><th>Memory</th></tr></thead>
+            <tbody id="sys-procs"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ OPTIMIZER ============ -->
+      <section class="view" id="view-optimizer">
+        <div class="view-header">
+          <div>
+            <h1>Optimizer</h1>
+            <p class="subtitle">OS and game configuration tuning. Every file change is backed up first.</p>
+          </div>
+        </div>
+
+        <div class="panel-row">
+          <div class="panel toggle-panel">
+            <div>
+              <h3>Autopilot</h3>
+              <p class="muted">Sets High CPU priority when the selected game starts. Windows drops it automatically when the game closes. No config files are changed.</p>
+            </div>
+            <label class="switch"><input type="checkbox" id="toggle-auto-optimize" /><span class="switch-slider"></span></label>
+          </div>
+          <div class="panel toggle-panel">
+            <div>
+              <h3>High Performance Power Plan</h3>
+              <p class="muted">Switch Windows to the High Performance power scheme while gaming. Turning it off selects Balanced.</p>
+            </div>
+            <label class="switch"><input type="checkbox" id="toggle-power-plan" /><span class="switch-slider"></span></label>
+          </div>
+        </div>
+
+        <div class="panel toggle-panel premium">
+          <div>
+            <h3>Process Assassin <span class="badge-ultra">Ultra Game Mode</span><span class="assassin-count" id="assassin-count"></span></h3>
+            <p class="muted">Drops browsers, Discord, Spotify and launcher helpers to Idle CPU priority so the game gets the cores. Nothing is closed. Turning it off (or quitting NexusApp) puts them back to Normal. Apps opened after you switch it on are not affected — toggle again to catch them.</p>
+          </div>
+          <label class="switch"><input type="checkbox" id="toggle-assassin" /><span class="switch-slider"></span></label>
+        </div>
+
+        <div class="panel">
+          <h3>Manual fixes</h3>
+          <div class="fix-grid">
+            <button class="btn-secondary" data-fix="fg_cap">Cap Frame Generation at 2×</button>
+            <button class="btn-secondary" data-fix="cpu_priority">Apply High CPU Priority</button>
+          </div>
+          <p class="muted">Frame Generation cap: lowers 3×/4× to 2× in GameUserSettings.ini (game must be closed; backup saved first). Uses less VRAM than 4×. It does not fix VRAM overflow on its own. Lowering textures does.</p>
+          <div class="inline-message" id="optimizer-msg"></div>
+        </div>
+
+        <div class="panel">
+          <h3>VRAM warnings</h3>
+          <div class="stat-line"><span>Amber above</span><strong>85%</strong></div>
+          <div class="stat-line"><span>Red above</span><strong>92%</strong></div>
+        </div>
+      </section>
+
+      <!-- ============ MODS ============ -->
+      <section class="view" id="view-mods">
+        <div class="view-header">
+          <div>
+            <h1>Mods</h1>
+            <p class="subtitle">Install, switch on and off, and browse Nexus Mods for <span id="mods-game-name">—</span></p>
+          </div>
+          <button class="btn-primary" id="btn-install-archive"><svg class="i"><use href="#i-box"/></svg> Install archive…</button>
+        </div>
+
+        <div class="notice">
+          <svg class="i"><use href="#i-shield"/></svg>
+          <div>File-based only. Nexus copies files into the game's own mod and config folders and backs up anything it overwrites. It never touches the game's process or memory. Remove restores the folder exactly as it was.</div>
+        </div>
+        <div class="notice bad" id="mods-anticheat" hidden>
+          <svg class="i"><use href="#i-shield"/></svg>
+          <div id="mods-anticheat-text"></div>
+        </div>
+
+        <div class="panel">
+          <h3>Installed mods <span class="badge warn">Applies on next launch</span></h3>
+          <p class="muted small">Archives are unpacked to a staging folder and routed by file type: .pak → Paks/~mods, matching .ini → the game's config folder, ReShade presets → next to ReShade. Code files (.dll/.exe) are never installed. Switching off removes the files and restores originals.</p>
+          <div class="mod-list" id="archive-list"></div>
+          <div class="inline-message" id="archive-msg"></div>
+        </div>
+
+        <div class="panel">
+          <h3>Mod Bisect <span class="badge accent" id="bisect-badge">Find the broken mod</span></h3>
+          <p class="muted small">Game broken with mods on? Bisect switches half of your ON mods off. Launch the game, say whether it works, and it halves again until one mod is left (about log₂(n) launches). Close the game between steps. Stop puts every mod back ON.</p>
+          <div class="target-line" id="bisect-state"></div>
+          <div class="btn-row">
+            <button class="btn-secondary" id="btn-bisect-start">Start with the ON mods</button>
+            <button class="btn-secondary" id="btn-bisect-works" hidden>Game works</button>
+            <button class="btn-ghost danger" id="btn-bisect-broken" hidden>Still broken</button>
+            <button class="btn-ghost" id="btn-bisect-abort" hidden>Stop &amp; restore</button>
+          </div>
+          <div class="inline-message" id="bisect-msg"></div>
+        </div>
+
+        <div class="panel nexus">
+          <div class="nexus-head">
+            <h3>Nexus Mods <span class="badge accent" id="nexus-user">Not connected</span></h3>
+            <div class="nexus-rate muted small" id="nexus-rate"></div>
+          </div>
+          <div class="nexus-key" id="nexus-key-row">
+            <input class="field" type="password" id="nexus-key" placeholder="Paste your personal API key (nexusmods.com › Site preferences › API Keys)" autocomplete="off" spellcheck="false" />
+            <button class="btn-secondary" id="btn-nexus-key">Connect</button>
+            <button class="btn-ghost danger" id="btn-nexus-logout" hidden>Disconnect</button>
+          </div>
+          <div class="nexus-bar">
+            <div class="seg" id="nexus-feeds">
+              <button data-feed="trending" class="on">Trending</button>
+              <button data-feed="latest_added">Latest</button>
+              <button data-feed="latest_updated">Updated</button>
+            </div>
+            <label class="field-label">Game domain <input class="field slim" id="nexus-domain" spellcheck="false" /></label>
+            <label class="nxm-opt" title="Makes 'Mod Manager Download' buttons on nexusmods.com open in this app (takes over from Vortex/MO2)">
+              <span>Handle Nexus download links</span>
+              <span class="switch"><input type="checkbox" id="toggle-nxm" /><span class="switch-slider"></span></span>
+            </label>
+          </div>
+          <div class="nexus-key">
+            <input class="field" id="nexus-nxm" placeholder="…or paste an nxm:// link from 'Mod Manager Download'" spellcheck="false" />
+            <button class="btn-secondary" id="btn-nexus-nxm">Install link</button>
+          </div>
+          <div class="inline-message" id="nexus-msg"></div>
+          <div class="nx-grid" id="nexus-grid"></div>
+        </div>
+
+        <h2 class="section-title">Quick swaps <span>single files</span></h2>
+        <div class="panel-row three">
+          <div class="panel mod-card">
+            <div class="icon"><svg class="i"><use href="#i-box"/></svg></div>
+            <h3>Unreal pak mod <span class="badge warn">Next launch</span></h3>
+            <p class="muted">Copies .pak (+ .utoc/.ucas) into <code>Content/Paks/~mods</code>. Unreal mounts paks at startup, so the game must be closed.</p>
+            <div class="actions">
+              <div class="target-line" id="mods-pak-dir"></div>
+              <button class="btn-secondary" data-mod-kind="pak">Choose pak files…</button>
+            </div>
+          </div>
+          <div class="panel mod-card">
+            <div class="icon"><svg class="i"><use href="#i-palette"/></svg></div>
+            <h3>ReShade preset <span class="badge good">Live via ReShade</span></h3>
+            <p class="muted">Drops a preset .ini next to ReShade. While playing, pick it from ReShade's preset list (Home key). With the game closed it also becomes the startup preset.</p>
+            <div class="actions">
+              <div class="target-line" id="mods-reshade-state"></div>
+              <button class="btn-secondary" data-mod-kind="reshade">Choose preset…</button>
+            </div>
+          </div>
+          <div class="panel mod-card">
+            <div class="icon"><svg class="i"><use href="#i-file"/></svg></div>
+            <h3>Config swap <span class="badge warn">Next launch</span></h3>
+            <p class="muted">Replaces one config file (Engine.ini, GameUserSettings.ini, …) with your version. Games rewrite configs on exit, so close the game first.</p>
+            <div class="actions">
+              <div class="target-line" id="mods-config-target">No target chosen</div>
+              <button class="btn-ghost" id="btn-config-target">1. Choose file to replace…</button>
+              <button class="btn-secondary" data-mod-kind="config" disabled>2. Choose replacement…</button>
+            </div>
+          </div>
+        </div>
+        <div class="inline-message" id="mods-msg" style="margin:0 0 16px"></div>
+
+        <div class="panel">
+          <h3>Applied mods</h3>
+          <table class="table">
+            <thead><tr><th>Name</th><th>Type</th><th>Files</th><th>Applied</th><th></th></tr></thead>
+            <tbody id="mods-list"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ BACKUPS ============ -->
+      <section class="view" id="view-backups">
+        <div class="view-header">
+          <div>
+            <h1>Backup &amp; Rollback</h1>
+            <p class="subtitle">Every file Nexus changes is copied here first. Restoring also backs up the current version, so a rollback can be undone too.</p>
+          </div>
+          <button class="btn-secondary" id="btn-backups-refresh">&#x21bb; Refresh</button>
+        </div>
+        <div class="panel">
+          <h3>Config Time Machine <span class="badge accent" id="tm-dir">No game</span></h3>
+          <p class="muted small">The game's .ini files. <b>Lock</b> makes a file read-only so the game can't rewrite your tweaks on exit. <b>Pin</b> remembers this exact version and flags it as <i>reverted</i> if anything changes it. <b>Restore</b> goes back to the newest earlier copy (full history below).</p>
+          <table class="table">
+            <thead><tr><th>File</th><th>State</th><th>Versions</th><th></th></tr></thead>
+            <tbody id="tm-list"></tbody>
+          </table>
+          <div class="inline-message" id="tm-msg"></div>
+        </div>
+        <div class="inline-message" id="backups-msg" style="margin:0 0 12px"></div>
+        <div class="panel">
+          <table class="table">
+            <thead><tr><th>When</th><th>Original file</th><th>Size</th><th></th></tr></thead>
+            <tbody id="backups-list"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ BENCHMARK LAB ============ -->
+      <section class="view" id="view-bench">
+        <div class="view-header">
+          <div>
+            <h1>Benchmark Lab</h1>
+            <p class="subtitle">Record a run in <span id="bench-game-name">—</span>, change one thing, record again, compare. Frame times come from PresentMon only.</p>
+          </div>
+          <button class="btn-secondary" id="btn-bench-refresh">&#x21bb; Refresh</button>
+        </div>
+        <div class="panel">
+          <h3>Record</h3>
+          <div class="form-row">
+            <input class="field" id="bench-label" maxlength="80" placeholder="Label, e.g. DLSS Quality + FG 2x" spellcheck="false" />
+            <button class="btn-primary" id="btn-bench-record">Start recording</button>
+          </div>
+          <p class="muted small">Play the same scene for about the same time (30–60 s) in every run. Needs the game running and PresentMon capturing (FPS visible on the Dashboard).</p>
+          <div class="inline-message" id="bench-msg"></div>
+        </div>
+        <div class="panel">
+          <h3>Runs</h3>
+          <table class="table">
+            <thead><tr><th>When</th><th>Label</th><th>Avg FPS</th><th>1% low</th><th>0.1% low</th><th>Stutters</th><th>Length</th><th></th></tr></thead>
+            <tbody id="bench-list"></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h3>Compare</h3>
+          <div class="form-row">
+            <select class="game-select" id="bench-a"></select>
+            <select class="game-select" id="bench-b"></select>
+            <button class="btn-secondary" id="btn-bench-compare">Compare</button>
+          </div>
+          <table class="table">
+            <thead><tr><th>Metric</th><th>A</th><th>B</th><th>Change</th></tr></thead>
+            <tbody id="bench-compare"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ SAVE-GAME BACKUPS ============ -->
+      <section class="view" id="view-saves">
+        <div class="view-header">
+          <div>
+            <h1>Save-Game Backups</h1>
+            <p class="subtitle">Saves for <span id="saves-game-name">—</span> are zipped every time the game closes. Unchanged saves are skipped; the newest 20 are kept.</p>
+          </div>
+          <button class="btn-primary" id="btn-saves-backup"><svg class="i"><use href="#i-save"/></svg> Back up now</button>
+        </div>
+        <div class="notice">
+          <svg class="i"><use href="#i-shield"/></svg>
+          <div>Backups and restores only run while the game is closed: copying saves a game has open can capture a broken file. Restoring backs up the current saves first, so it can be undone.</div>
+        </div>
+        <div class="panel">
+          <h3>Save folder</h3>
+          <div class="stat-line"><span>Backed up</span><strong class="path" id="saves-dirs">—</strong></div>
+          <div class="form-row" style="margin:10px 0 0">
+            <button class="btn-secondary" id="btn-saves-folder">Choose folder…</button>
+            <button class="btn-ghost" id="btn-saves-auto">Auto-detect</button>
+          </div>
+          <div class="inline-message" id="saves-msg"></div>
+        </div>
+        <div class="panel">
+          <table class="table">
+            <thead><tr><th>When</th><th>Files</th><th>Size</th><th></th></tr></thead>
+            <tbody id="saves-list"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ SETTINGS ============ -->
+      <section class="view" id="view-settings">
+        <div class="view-header">
+          <div>
+            <h1>Settings</h1>
+            <p class="subtitle">Backend &amp; detection configuration</p>
+          </div>
+        </div>
+
+        <div class="panel-row">
+          <div class="panel">
+            <h3>Backend</h3>
+            <div class="stat-line"><span>API endpoint</span><strong>http://127.0.0.1:5000</strong></div>
+            <div class="stat-line"><span>Connection</span><strong id="settings-backend-status">—</strong></div>
+          </div>
+          <div class="panel">
+            <h3>Overlay</h3>
+            <div class="stat-line"><span>Hotkey</span><strong>Ctrl + Shift + O</strong></div>
+            <div class="stat-line"><span>Works over</span><strong>Borderless / windowed games</strong></div>
+            <p class="muted small" style="margin:8px 0 0">A separate transparent window, not an injected hook. It can't draw over exclusive fullscreen.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Detected game</h3>
+          <div class="stat-line"><span>Name</span><strong id="settings-game-name">—</strong></div>
+          <div class="stat-line"><span>Engine</span><strong id="settings-game-engine">—</strong></div>
+          <div class="stat-line"><span>Optimization profile</span><strong id="settings-game-profile">—</strong></div>
+          <div class="stat-line"><span>Found via</span><strong id="settings-game-store">—</strong></div>
+          <div class="stat-line"><span>Install path</span><strong id="settings-install-path">—</strong></div>
+          <div class="stat-line"><span>Config path</span><strong id="settings-config-path">—</strong></div>
+          <div class="stat-line"><span>GameUserSettings.ini</span><strong id="settings-gus-path">—</strong></div>
+          <div class="stat-line"><span>Game running</span><strong id="settings-game-running">—</strong></div>
+        </div>
+
+        <div class="panel">
+          <h3>About</h3>
+          <p class="muted">Nexus Optimize &amp; Mod (NOM) v2.1. GPU data comes from NVML and CPU/RAM data from psutil; latency is measured live over TCP. Frame rate comes from PresentMon (ETW, out-of-process); without it the app shows "—" instead of an invented number.</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="renderer/app.js"></script>
+</body>
+</html>

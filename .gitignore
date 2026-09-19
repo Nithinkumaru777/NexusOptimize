@@ -1,0 +1,9 @@
+﻿node_modules/
+dist/
+build/
+.venv/
+__pycache__/
+*.pyc
+.env
+nexus.db
+third_party/PresentMon.exe

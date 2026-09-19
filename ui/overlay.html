@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' http://127.0.0.1:5000;" />
+<title>NOM overlay</title>
+<style>
+  /* Compact one-line HUD; the window itself is pinned top-right (overlay-bounds.js). */
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none;
+               font-family: 'Segoe UI Variable Text', 'Segoe UI', sans-serif; }
+  body { display: flex; justify-content: flex-end; align-items: center; }
+  .hud { display: flex; gap: 9px; align-items: baseline; padding: 4px 10px; border-radius: 999px;
+         background: rgba(8, 10, 18, 0.62); border: 1px solid rgba(255, 255, 255, 0.08);
+         font-size: 11px; line-height: 16px; color: #eef2ff; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .hud span { color: #7c86a8; font-size: 9px; letter-spacing: .5px; margin-right: 3px; }
+  .hud b { font-weight: 650; }
+  .ok { color: #34f5b0; } .warn { color: #ffc043; } .bad { color: #ff4d6d; } .off { color: #6b7288; }
+</style>
+</head>
+<body>
+  <div class="hud">
+    <div><span>FPS</span><b id="fps" class="off" title="Waiting for PresentMon">—</b></div>
+    <div><span>VRAM</span><b id="vram">—</b></div>
+    <div><span>GPU</span><b id="gpu">—</b></div>
+    <div><span>CPU</span><b id="cpu">—</b></div>
+  </div>
+<script>
+(() => {
+  const tokenPromise = window.nom.getToken();
+  const $ = (id) => document.getElementById(id);
+  const num = (v) => typeof v === 'number';
+  const set = (id, text, cls) => { $(id).textContent = text; $(id).className = cls; };
+
+  async function tick() {
+    try {
+      const res = await fetch('http://127.0.0.1:5000/telemetry', { headers: { 'X-Nexus-Token': await tokenPromise } });
+      if (!res.ok) throw new Error(res.status);
+      const d = await res.json();
+      // Never simulated: FPS is PresentMon (ETW) or "—" with the reason on hover.
+      set('fps', num(d.fps) ? d.fps.toFixed(0) : '—', num(d.fps) ? 'ok' : 'off');
+      $('fps').title = num(d.fps) ? 'PresentMon (ETW)' : (d.fps_status || '');
+      set('vram', num(d.vram_percent) ? `${d.vram_percent.toFixed(0)}%` : '—',
+          d.vram_percent >= 92 ? 'bad' : d.vram_percent >= 85 ? 'warn' : 'ok');
+      set('gpu', num(d.gpu_util) ? `${d.gpu_util}%` : '—', num(d.gpu_util) ? '' : 'off');
+      set('cpu', num(d.cpu_percent) ? `${d.cpu_percent.toFixed(0)}%` : '—', '');
+    } catch (err) {
+      ['fps', 'vram', 'gpu', 'cpu'].forEach((id) => set(id, '—', 'off'));
+    }
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
