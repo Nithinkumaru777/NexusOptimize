@@ -37,7 +37,9 @@
       document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
       btn.classList.add('active');
       moveGlider(btn);
-      document.getElementById('view-' + btn.dataset.view).classList.add('active');
+      const view = document.getElementById('view-' + btn.dataset.view);
+      view.classList.add('active');
+      revealView(view);
       activeView = btn.dataset.view;
       if (activeView === 'system') pollSystem();
       if (activeView === 'optimizer') refreshAssassin();
@@ -58,8 +60,53 @@
   window.nom.onOverlayState(setOverlayBtn);
 
   // ------------------------------------------------------------------
-  // Motion hooks for style.css
+  // Motion (GSAP, bundled at ui/lib). GSAP owns `transform`; style.css hover and
+  // press effects use the separate translate/scale properties, so both compose.
   // ------------------------------------------------------------------
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Fade the glass cards, never their wrappers: opacity < 1 on an ancestor
+  // cuts the children's backdrop-filter off from the page behind.
+  const blocksOf = (view) => [...view.children].flatMap((c) =>
+    (c.matches('.gauge-grid, .panel-row') ? [...c.children] : [c]));
+
+  function revealView(view, delay = 0) {
+    if (calm) return;
+    gsap.fromTo(blocksOf(view), { autoAlpha: 0, y: 30, scale: 0.97 }, {
+      autoAlpha: 1, y: 0, scale: 1, duration: 0.95, ease: 'expo.out',
+      stagger: 0.06, delay, overwrite: true, clearProps: 'opacity,visibility',
+    });
+  }
+
+  function intro() {
+    if (calm) return;
+    gsap.timeline({ defaults: { ease: 'expo.out', duration: 1 } })
+      .from('.titlebar', { autoAlpha: 0, y: -20 })
+      .from('.sidebar', { autoAlpha: 0, x: -36 }, 0.08)
+      .from('.nav-group > :not(.nav-glider), .sidebar-footer', { autoAlpha: 0, x: -18, stagger: 0.035, duration: 0.8 }, 0.22)
+      .from('#dash-game-name', { clipPath: 'inset(0 0 100% 0)', y: 28, duration: 1.3, clearProps: 'clipPath' }, 0.55)
+      .from('.hero-badges > *', { autoAlpha: 0, y: 10, scale: 0.9, stagger: 0.07, duration: 0.7 }, 0.8);
+    revealView(document.querySelector('.view.active'), 0.3);
+  }
+
+  // Liquid tilt: cards lean toward the pointer and settle back on leave.
+  const TILT_DEG = 5;
+  const tilted = new WeakSet();
+  document.addEventListener('pointerover', (e) => {
+    const card = !calm && e.target.closest('.gauge-card, .mod-card, .nx-card');
+    if (!card || tilted.has(card)) return;
+    tilted.add(card);
+    gsap.set(card, { transformPerspective: 900 });
+    const rx = gsap.quickTo(card, 'rotationX', { duration: 0.7, ease: 'power3' });
+    const ry = gsap.quickTo(card, 'rotationY', { duration: 0.7, ease: 'power3' });
+    card.addEventListener('pointermove', (ev) => {
+      const r = card.getBoundingClientRect();
+      ry(((ev.clientX - r.left) / r.width - 0.5) * 2 * TILT_DEG);
+      rx(-((ev.clientY - r.top) / r.height - 0.5) * 2 * TILT_DEG);
+    });
+    card.addEventListener('pointerleave', () => { rx(0); ry(0); });
+  });
+
   // Pointer spotlight on glass cards (read as --mx/--my by ::before).
   document.addEventListener('pointermove', (e) => {
     const card = e.target.closest('.panel, .gauge-card, .hero, .nx-card');
@@ -1100,6 +1147,7 @@
   // ------------------------------------------------------------------
   // Boot
   // ------------------------------------------------------------------
+  intro();
   pollTelemetry();
   loadGames(true).then(pollGame);
   pollLaunchStatus(); // resumes progress display if a launch is already running

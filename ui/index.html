@@ -28,7 +28,7 @@
   <!-- Custom titlebar (frameless window) -->
   <header class="titlebar">
     <div class="titlebar-drag">
-      <span class="brand-mark">N</span>
+      <span class="brand-mark" aria-hidden="true">N</span>
       <span class="brand-name">NEXUS<strong>OPTIMIZE</strong></span>
       <span class="backend-pill" id="backend-pill"><i class="dot"></i> connecting…</span>
     </div>
@@ -116,10 +116,10 @@
         <div class="panel-row wide-left">
           <div class="panel">
             <h3>Last 2 minutes
-              <span class="legend"><span><i style="background:var(--accent)"></i>VRAM %</span><span><i style="background:var(--accent-2)"></i>GPU %</span></span>
+              <span class="legend"><span><i style="background:var(--primary)"></i>VRAM %</span><span><i style="background:var(--secondary)"></i>GPU %</span></span>
             </h3>
             <svg class="spark" id="spark" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <defs><linearGradient id="g-vram" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4de8d4" stop-opacity=".28"/><stop offset="1" stop-color="#4de8d4" stop-opacity="0"/></linearGradient></defs>
+              <defs><linearGradient id="g-vram" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-opacity=".28"/><stop offset="1" stop-opacity="0"/></linearGradient></defs>
               <path class="vram" id="spark-vram" d=""/>
               <path class="gpu" id="spark-gpu" d=""/>
             </svg>
@@ -143,7 +143,7 @@
       <section class="view" id="view-system">
         <div class="view-header">
           <div>
-            <h1>System Resources</h1>
+            <h1>System <em class="serif-accent">resources</em></h1>
             <p class="subtitle">Live readings from NVML and psutil, refreshed every 2 s while this tab is open.</p>
           </div>
         </div>
@@ -184,7 +184,7 @@
       <section class="view" id="view-optimizer">
         <div class="view-header">
           <div>
-            <h1>Optimizer</h1>
+            <h1>Performance <em class="serif-accent">optimizer</em></h1>
             <p class="subtitle">OS and game configuration tuning. Every file change is backed up first.</p>
           </div>
         </div>
@@ -235,7 +235,7 @@
       <section class="view" id="view-mods">
         <div class="view-header">
           <div>
-            <h1>Mods</h1>
+            <h1>Mod <em class="serif-accent">library</em></h1>
             <p class="subtitle">Install, switch on and off, and browse Nexus Mods for <span id="mods-game-name">—</span></p>
           </div>
           <button class="btn-primary" id="btn-install-archive"><svg class="i"><use href="#i-box"/></svg> Install archive…</button>
@@ -346,7 +346,7 @@
       <section class="view" id="view-backups">
         <div class="view-header">
           <div>
-            <h1>Backup &amp; Rollback</h1>
+            <h1>Backup &amp; <em class="serif-accent">rollback</em></h1>
             <p class="subtitle">Every file Nexus changes is copied here first. Restoring also backs up the current version, so a rollback can be undone too.</p>
           </div>
           <button class="btn-secondary" id="btn-backups-refresh">&#x21bb; Refresh</button>
@@ -373,7 +373,7 @@
       <section class="view" id="view-bench">
         <div class="view-header">
           <div>
-            <h1>Benchmark Lab</h1>
+            <h1>Benchmark <em class="serif-accent">lab</em></h1>
             <p class="subtitle">Record a run in <span id="bench-game-name">—</span>, change one thing, record again, compare. Frame times come from PresentMon only.</p>
           </div>
           <button class="btn-secondary" id="btn-bench-refresh">&#x21bb; Refresh</button>
@@ -412,7 +412,7 @@
       <section class="view" id="view-saves">
         <div class="view-header">
           <div>
-            <h1>Save-Game Backups</h1>
+            <h1>Save-game <em class="serif-accent">backups</em></h1>
             <p class="subtitle">Saves for <span id="saves-game-name">—</span> are zipped every time the game closes. Unchanged saves are skipped; the newest 20 are kept.</p>
           </div>
           <button class="btn-primary" id="btn-saves-backup"><svg class="i"><use href="#i-save"/></svg> Back up now</button>
@@ -442,7 +442,7 @@
       <section class="view" id="view-settings">
         <div class="view-header">
           <div>
-            <h1>Settings</h1>
+            <h1>App <em class="serif-accent">settings</em></h1>
             <p class="subtitle">Backend &amp; detection configuration</p>
           </div>
         </div>
@@ -482,6 +482,7 @@
     </main>
   </div>
 
+  <script src="lib/gsap.min.js"></script>
   <script src="renderer/app.js"></script>
 </body>
 </html>
