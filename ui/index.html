@@ -270,6 +270,18 @@
           <div class="inline-message" id="bisect-msg"></div>
         </div>
 
+        <div class="panel share">
+          <h3>Modpack Share <span class="badge" id="share-code" hidden></span></h3>
+          <p class="muted small">Send a friend your ON Nexus mods (with load order) as a short code. Codes last 7 days.</p>
+          <div class="nexus-key">
+            <button class="btn-primary btn-glow" id="btn-share-export">Export Modpack</button>
+            <input class="field" id="share-input" placeholder="Paste a friend's code, e.g. NX-84F2" spellcheck="false" maxlength="40" />
+            <button class="btn-secondary" id="btn-share-import">Load code</button>
+          </div>
+          <div class="inline-message" id="share-msg"></div>
+          <div class="share-list" id="share-list"></div>
+        </div>
+
         <div class="panel nexus">
           <div class="nexus-head">
             <h3>Nexus Mods <span class="badge accent" id="nexus-user">Not connected</span></h3>

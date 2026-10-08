@@ -80,7 +80,7 @@ Every feature follows AGENTS.md: TDD, no simulated data, no injection/admin with
 | 2 | **Auto Save-Game Backup** — zip saves on game exit, one-click restore | 1 | Built (D-010). Accepted on real Windrose saves. |
 | 3 | **Config Time Machine** — per-file history, lock (read-only), pin + revert detection | 2 | Built (D-011). UI clicks on real files not yet accepted. |
 | 4 | **Mod Bisect** — binary search over archive mods | 2 | Built (D-011). Real-game run still open. |
-| 5 | Modpack Lockfiles | 2 | Not started |
+| 5 | **Modpack Share Codes** — NX-xxxx codes for a friend's Nexus modlist | 2 | Built (D-012). Real two-PC install still open. |
 | 6 | AI Bottleneck Resolver | 3 | Not started. Needs Benchmark Lab data first. Decide the model/provider and what data leaves the machine before building. |
 
 ## D-009 — Benchmark Lab (2026-09-19)
@@ -120,3 +120,17 @@ Every feature follows AGENTS.md: TDD, no simulated data, no injection/admin with
 - **FPS '—' root cause (2026-09-19):** `third_party/PresentMon.exe` (2.5.1) is found and started, but exits with
   `access denied` — this account is not admin nor in *Performance Log Users*. The status only showed PresentMon's last
   help line, hiding the error + hint; it now keeps the `error:` line. 2.5.1's default CSV still has `MsBetweenPresents`.
+
+## D-012 — Modpack share codes (2026-10-08)
+- **Hosting:** no server of our own. `core/mods/share.py` posts the pack to **dpaste.org** (`POST /api/`, `format=url`,
+  `expires=604800`, so codes last one week) and the code is `NX-<dpaste slug>`. Import reads `https://dpaste.org/<slug>/raw`.
+  The host is fixed, so a code can't point the app anywhere else. If dpaste is down or deletes the paste, the code stops working.
+- **What leaves the machine:** game domain, then per mod: Nexus mod id, file id, name, version, load-order index. No paths, no
+  local archives. Only **enabled** mods installed from Nexus are shared. Enabled local mods are counted and reported as left out.
+- **Load order** = manifest order. The archive manager deploys in that order and refuses file clashes, so there is no
+  separate order field to read.
+- **Import is untrusted input:** the slug has to match `[A-Za-z0-9]{2,32}`, the paste is capped at 256 KB, the schema is
+  version 1, ids must be non-negative ints (bools refused), names are cut to 120 characters and the domain is checked by
+  `nexus._DOMAIN`. A pack for another game is refused.
+  The UI only *lists* the pack (installed / different file / not installed). Each install goes through the existing
+  `/nexus/install`, so free accounts still get sent to Nexus' "Mod Manager Download" page. Nothing auto-downloads.

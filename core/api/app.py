@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from core.discovery import library as games
-from core.mods import bisect, live, manager, nexus
+from core.mods import bisect, live, manager, nexus, share
 from core.optimize import autopilot, cpu, ini
 from core.optimize.power import set_power_plan
 from core.safety import backup, saves
@@ -674,3 +674,35 @@ def nexus_install(body: dict = Body(...)):
     finally:
         os.remove(path)   # contents now live in staging
     return _result(ok, msg, mod=mod)
+
+
+# ---------------------------------------------------------------- Modpack share codes
+@app.post("/share/export")
+def share_export():
+    _, spec = _active()
+    if not spec:
+        return _no_game()
+    try:
+        code, pack, skipped = share.export(nexus.domain_for(spec), manager.mods(spec["id"]))
+    except share.ShareError as e:
+        return _bad_request(str(e))
+    n = len(pack["mods"])
+    note = f" {skipped} local mod(s) left out - only Nexus installs can be shared." if skipped else ""
+    return _result(True, f"Share code {code}: {n} mod(s), valid for 7 days.{note}", code=code, count=n, skipped=skipped)
+
+
+@app.post("/share/import")
+def share_import(body: dict = Body(...)):
+    _, spec = _active()
+    if not spec:
+        return _no_game()
+    try:
+        pack = share.fetch(body.get("code"))
+    except share.ShareError as e:
+        return _bad_request(str(e))
+    domain = nexus.domain_for(spec)
+    if pack["game"] != domain:
+        return _bad_request(f"That modpack is for '{pack['game']}', but the selected game is '{domain}'.")
+    mods = share.compare(pack, manager.mods(spec["id"]))
+    todo = sum(m["state"] != "installed" for m in mods)
+    return _result(True, f"{len(mods)} mod(s) in this pack, {todo} to install.", game=domain, mods=mods)

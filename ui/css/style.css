@@ -665,6 +665,14 @@ code { font-family: var(--font-mono); font-size: .92em; color: var(--primary); b
 .nx-file-name { font-size: 12px; min-width: 0; overflow-wrap: anywhere; }
 .nx-file-name small { color: var(--text-low); }
 
+/* Modpack share */
+.btn-glow { white-space: nowrap; animation: share-glow 2.4s ease-in-out infinite; }
+@keyframes share-glow { 50% { box-shadow: 0 8px 30px -4px var(--glow), 0 0 40px -6px var(--glow-2), inset 0 1px 0 rgba(255,255,255,0.35); } }
+@media (prefers-reduced-motion: reduce) { .btn-glow { animation: none; } }
+#share-code { cursor: copy; font-family: var(--font-hud); letter-spacing: 1px; }
+.share-list { display: flex; flex-direction: column; gap: 6px; }
+.share-list .nx-file { padding: 6px 0; border-top: 1px solid var(--hairline); }
+
 /* ------------------------------------------------------------------ activity log */
 .log { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column-reverse; gap: 7px; user-select: text; }
 .log-entry { font-size: 12px; color: var(--text-mid); display: flex; gap: 10px; padding-left: 10px; border-left: 2px solid color-mix(in srgb, var(--primary) 25%, transparent); animation: log-in .5s var(--ease-out) backwards; }

@@ -189,3 +189,26 @@ LZMA was ruled out because Windows Explorer can't open LZMA zips, and users shou
 - **UI changes weren't checked in the running Electron app.** That covers the spinners, the error tooltip (`title`), and the "N processes throttled" badge.
   They pass the JS syntax check only.
 - A failed *automatic* backup (game exit) returns an error, but nothing shows it in the UI. It used to be an unhandled thread exception.
+
+## Epic P3 #5 — Modpack share codes (2026-10-08)
+
+### 1. Test suites on this machine
+```
+.venv\Scripts\python -m pytest -q tests  ->  190 passed, 1 skipped   (25 new in tests/test_share.py)
+node --test tests/*.test.js              ->  tests 3 · pass 3 · fail 0
+node --check ui/renderer/app.js          ->  OK
+```
+Red first: 21 engine tests failed on import (no `core/mods/share.py`), then 4 route tests failed before `/share/*` existed.
+
+### 2. Live round-trip against dpaste.org (fake mod ids, 1-hour expiry)
+```
+code: NX-LiXib
+round-trip equal: True
+compare: ['installed']
+unknown code: Share code not found - it may have expired (codes last 7 days).
+```
+This confirms dpaste's `/api/` reply format and the `/<slug>/raw` endpoint (neither is in dpaste's docs).
+
+### Not tested / known gaps
+- **The UI wasn't checked in the running Electron app** (glow button, code badge pop-in, row stagger). It passes the syntax check only.
+- No real two-PC run yet (export on one machine → import + install on another).

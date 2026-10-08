@@ -896,21 +896,27 @@
       const label = el('div', 'nx-file-name', plain(f.name));
       label.appendChild(el('small', null, ` v${f.version || '?'} · ${((f.size_in_bytes || (f.size_kb || 0) * 1024) / 1048576).toFixed(1)} MB · ${f.category_name || ''}`));
       const btn = el('button', 'btn-ghost', 'Install');
-      btn.addEventListener('click', () => withBusy(btn, async () => {
-        setMsg('nexus-msg', { status: 'pending', message: `Downloading ${f.file_name || f.name}…` });
-        try {
-          const res = await api('/nexus/install', { domain, mod_id: m.mod_id, file_id: f.file_id });
-          report('nexus-msg', res);
-          // Free accounts: Nexus requires the website's "Mod Manager Download" button.
-          if (res.status === 'error' && res.message.includes('Mod Manager Download')) {
-            window.nom.openNexus(`https://www.nexusmods.com/${domain}/mods/${m.mod_id}?tab=files&file_id=${f.file_id}`);
-          }
-        } catch (err) { fail('nexus-msg', err); }
-        loadArchiveMods();
-      }));
+      btn.addEventListener('click', () => withBusy(btn, () =>
+        installNexusFile('nexus-msg', domain, m.mod_id, f.file_id, f.file_name || f.name)));
       row.append(label, btn);
       return row;
     }));
+  }
+
+  // Returns true once the mod is installed.
+  async function installNexusFile(msgId, domain, modId, fileId, label) {
+    setMsg(msgId, { status: 'pending', message: `Downloading ${label}…` });
+    let res;
+    try {
+      res = await api('/nexus/install', { domain, mod_id: modId, file_id: fileId });
+      report(msgId, res);
+      // Free accounts: Nexus requires the website's "Mod Manager Download" button.
+      if (res.status === 'error' && res.message.includes('Mod Manager Download')) {
+        window.nom.openNexus(`https://www.nexusmods.com/${domain}/mods/${modId}?tab=files&file_id=${fileId}`);
+      }
+    } catch (err) { fail(msgId, err); }
+    loadArchiveMods();
+    return res?.status === 'success';
   }
 
   async function installNxm(url) {
@@ -956,6 +962,61 @@
     await window.nom.nxmRegister(nxmToggle.checked);
     nxmToggle.checked = await window.nom.nxmStatus();
   });
+
+  // ---- Modpack share codes
+  const shareCode = document.getElementById('share-code');
+  const shareList = document.getElementById('share-list');
+  const SHARE_STATE = { installed: 'Installed', other_file: 'Different file installed', missing: 'Not installed' };
+
+  document.getElementById('btn-share-export').addEventListener('click', (e) => withBusy(e.currentTarget, async () => {
+    setMsg('share-msg', { status: 'pending', message: 'Uploading modpack…' });
+    let r;
+    try { r = await api('/share/export', {}); } catch (err) { return fail('share-msg', err); }
+    report('share-msg', r);
+    if (r.status !== 'success') return;
+    shareCode.textContent = r.code;
+    shareCode.title = 'Click to copy';
+    shareCode.hidden = false;
+    navigator.clipboard.writeText(r.code).catch(() => {});
+    if (!calm) gsap.fromTo(shareCode, { autoAlpha: 0, scale: 0.6, y: 6 }, { autoAlpha: 1, scale: 1, y: 0, duration: 0.8, ease: 'back.out(2.2)', clearProps: 'all' });
+  }));
+
+  shareCode.addEventListener('click', () => {
+    navigator.clipboard.writeText(shareCode.textContent).then(
+      () => setMsg('share-msg', { status: 'success', message: `Copied ${shareCode.textContent}.` }), () => {});
+  });
+
+  function shareRow(m, domain) {
+    const row = el('div', 'nx-file');
+    const label = el('div', 'nx-file-name', `${m.order + 1}. ${m.name || `Mod ${m.mod_id}`}`);
+    label.appendChild(el('small', null, ` v${m.version || '?'} · ${SHARE_STATE[m.state]}`));
+    row.append(label);
+    if (m.state !== 'installed') {
+      const btn = el('button', 'btn-ghost', 'Install');
+      btn.addEventListener('click', () => withBusy(btn, async () => {
+        if (await installNexusFile('share-msg', domain, m.mod_id, m.file_id, m.name || `mod ${m.mod_id}`)) btn.replaceWith(el('span', 'muted small', 'Installed'));
+      }));
+      row.append(btn);
+    }
+    return row;
+  }
+
+  async function importShare(btn) {
+    const input = document.getElementById('share-input');
+    if (!input.value.trim()) return;
+    await withBusy(btn, async () => {
+      setMsg('share-msg', { status: 'pending', message: 'Loading modpack…' });
+      let r;
+      try { r = await api('/share/import', { code: input.value.trim() }); } catch (err) { shareList.replaceChildren(); return fail('share-msg', err); }
+      setMsg('share-msg', r);
+      if (r.status !== 'success') return shareList.replaceChildren();
+      shareList.replaceChildren(...r.mods.map((m) => shareRow(m, r.game)));
+      if (!calm) gsap.from(shareList.children, { autoAlpha: 0, x: -16, duration: 0.6, ease: 'expo.out', stagger: 0.05, clearProps: 'all' });
+    });
+  }
+  const importBtn = document.getElementById('btn-share-import');
+  importBtn.addEventListener('click', () => importShare(importBtn));
+  document.getElementById('share-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') importShare(importBtn); });
 
   // ------------------------------------------------------------------
   // Backup & Rollback
