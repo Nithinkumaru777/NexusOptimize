@@ -7,6 +7,7 @@ psutil priority calls are exercised without touching anything else on the machin
 
 import shutil
 import subprocess
+import time
 
 import psutil
 import pytest
@@ -48,6 +49,27 @@ def test_on_drops_background_apps_to_idle_and_off_restores_normal(fake_app):
     assert ok
     assert proc.nice() == psutil.NORMAL_PRIORITY_CLASS
     assert cpu.assassin_status()["enabled"] is False
+
+
+ELEVATED = cpu._can_trim_others()
+
+
+@pytest.mark.skipif(not ELEVATED, reason="trimming another process needs SeIncreaseQuotaPrivilege (admin)")
+def test_on_flushes_the_working_set_of_throttled_apps(fake_app):
+    proc = fake_app()
+    time.sleep(0.5)   # let it finish loading, or its working set is still growing
+    before = proc.memory_info().rss   # rss == working set on Windows
+    ok, msg = cpu.process_assassin(True)
+    assert proc.memory_info().rss < before / 2
+    assert "MB of RAM" in msg
+
+
+@pytest.mark.skipif(ELEVATED, reason="non-admin path")
+def test_without_admin_the_ram_flush_is_reported_as_skipped(fake_app):
+    proc = fake_app()
+    ok, msg = cpu.process_assassin(True)
+    assert ok and proc.nice() == psutil.IDLE_PRIORITY_CLASS   # throttling still works
+    assert "RAM flush skipped" in msg and "administrator" in msg
 
 
 def test_apps_the_user_already_tuned_are_left_alone(fake_app):

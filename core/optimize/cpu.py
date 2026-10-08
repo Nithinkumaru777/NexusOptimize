@@ -338,28 +338,67 @@ def assassin_status():
 
 
 def process_assassin(enabled):
-    """ON: background apps at Normal -> Idle. OFF: the ones we lowered -> Normal.
+    """ON: background apps at Normal -> Idle, then their RAM is flushed. OFF: the ones we lowered -> Normal.
     Returns (ok, message)."""
     with _assassin_lock:
         return _assassin_on() if enabled else _assassin_off()
 
 
+def _can_trim_others():
+    """Trimming another process's working set needs SeIncreaseQuotaPrivilege: only admin
+    tokens hold it, disabled by default. Enables it; False on a standard (non-elevated) token."""
+    # ponytail: RtlAdjustPrivilege is undocumented but stable since NT; AdjustTokenPrivileges if it ever breaks
+    try:
+        return ctypes.WinDLL("ntdll").RtlAdjustPrivilege(5, True, False, ctypes.byref(ctypes.c_bool())) == 0
+    except (OSError, AttributeError):
+        return False
+
+
+def _empty_working_set(pid):
+    """Trims a process's working set (EmptyWorkingSet). Its pages move to the standby /
+    modified lists, so the game can take them; the app faults back what it touches.
+    Returns bytes trimmed, 0 when the process can't be opened."""
+    k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    k32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    k32.OpenProcess.restype = wintypes.HANDLE
+    # SIZE_T args: without argtypes ctypes would pass -1 as a 32-bit int on 64-bit Windows.
+    k32.SetProcessWorkingSetSize.argtypes = [wintypes.HANDLE, ctypes.c_size_t, ctypes.c_size_t]
+    k32.SetProcessWorkingSetSize.restype = wintypes.BOOL
+    handle = k32.OpenProcess(0x0200 | 0x1000, False, pid)   # PROCESS_SET_QUOTA | QUERY_LIMITED_INFORMATION
+    if not handle:
+        return 0
+    try:
+        before = psutil.Process(pid).memory_info().rss
+        if not k32.SetProcessWorkingSetSize(handle, -1, -1):
+            return 0
+        return max(0, before - psutil.Process(pid).memory_info().rss)
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
+        return 0
+    finally:
+        k32.CloseHandle(handle)
+
+
 def _assassin_on():
     _prune_lowered()
-    lowered, denied = _assassin["lowered"], 0
+    lowered, denied, trimmed = _assassin["lowered"], 0, 0
+    flush = _can_trim_others()
     for p in psutil.process_iter(["name"]):
         try:
-            if (p.info["name"] or "").lower() not in BACKGROUND_APPS or p.pid in lowered:
+            if (p.info["name"] or "").lower() not in BACKGROUND_APPS:
                 continue
-            if p.nice() == psutil.NORMAL_PRIORITY_CLASS:
+            if p.pid not in lowered and p.nice() == psutil.NORMAL_PRIORITY_CLASS:
                 p.nice(psutil.IDLE_PRIORITY_CLASS)
                 lowered[p.pid] = p.create_time()
+            if flush and p.pid in lowered:   # every ON re-flushes all throttled apps; they regrow while idle
+                trimmed += _empty_working_set(p.pid)
         except psutil.NoSuchProcess:
             continue
         except psutil.AccessDenied:
             denied += 1
     _assassin["enabled"] = True
     msg = f"Ultra Game Mode on: {len(lowered)} background process(es) at Idle priority."
+    msg += f" {trimmed / 2**20:.0f} MB of RAM flushed." if flush else \
+        " RAM flush skipped - start NexusApp as administrator."
     if denied:
         msg += f" {denied} skipped (access denied)."
     return True, msg
